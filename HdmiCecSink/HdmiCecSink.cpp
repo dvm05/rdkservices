@@ -2407,9 +2407,12 @@ namespace WPEFramework
 			switch ( _instance->deviceList[logicalAddress].m_isRequested ) {
 				case CECDeviceParams::REQUEST_PHISICAL_ADDRESS :
 				{
+
+					LOGINFO("requeststatus :: REQUEST_PHISICAL_ADDRESS");
 					if( _instance->deviceList[logicalAddress].m_isPAUpdated &&
 							_instance->deviceList[logicalAddress].m_isDeviceTypeUpdated )
 					{
+						LOGINFO("requeststatus :: physical address request is success so reset back to REQUEST_NONE");
 						_instance->deviceList[logicalAddress].m_isRequested = CECDeviceParams::REQUEST_NONE;
 					}
 				}
@@ -2527,7 +2530,7 @@ namespace WPEFramework
 				return CECDeviceParams::REQUEST_DONE;
 			}
 
-			//LOGINFO("Request NOT Done");
+			LOGINFO("Request NOT Done");
 			return CECDeviceParams::REQUEST_NOT_DONE;
 		}
 		
@@ -2633,7 +2636,7 @@ namespace WPEFramework
 
 				case POLL_THREAD_STATE_INFO :
 				{
-					//LOGINFO("POLL_THREAD_STATE_INFO");
+					LOGINFO("POLL_THREAD_STATE_INFO");
 
 					if ( logicalAddressRequested == LogicalAddress::UNREGISTERED + TEST_ADD )
 					{
@@ -2644,7 +2647,7 @@ namespace WPEFramework
 								_instance->deviceList[i].m_isDevicePresent &&
 								!_instance->deviceList[i].isAllUpdated() )
 							{
-								//LOGINFO("POLL_THREAD_STATE_INFO -> request for %d", i);
+								LOGINFO("POLL_THREAD_STATE_INFO -> request for %d", i);
 								logicalAddressRequested = i;
 								_instance->request(logicalAddressRequested);
 								_instance->m_sleepTime = HDMICECSINK_REQUEST_INTERVAL_TIME_MS;
@@ -2665,10 +2668,12 @@ namespace WPEFramework
 						/*So there is request sent for logical address, so wait and check the status */
 						if ( _instance->requestStatus(logicalAddressRequested) == CECDeviceParams::REQUEST_DONE )
 						{
+							LOGINFO("Request is done so logical address requested is set back to unregistered");
 							logicalAddressRequested = LogicalAddress::UNREGISTERED;
 						}
 						else
 						{
+							LOGINFO("Request is not done wait for 200 ms");
 							_instance->m_sleepTime = HDMICECSINK_REQUEST_INTERVAL_TIME_MS;							
 						}
 					}
