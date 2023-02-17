@@ -368,6 +368,7 @@ namespace WPEFramework
 	     LOGINFO("updateDeviceTypeStatus %d updatePAStatus %d \n",updateDeviceTypeStatus,updatePAStatus);
 	     HdmiCecSink::_instance->deviceList[header.from.toInt()].update(msg.physicalAddress);
 	     HdmiCecSink::_instance->deviceList[header.from.toInt()].update(msg.deviceType);
+	     LOGINFO("phusical address status = %d device type update = %d \n", HdmiCecSink::_instance->deviceList[header.from.toInt()].m_isPAUpdated, HdmiCecSink::_instance->deviceList[header.from.toInt()].m_isDeviceTypeUpdated);
 	     if(HdmiCecSink::_instance->deviceList[header.from.toInt()].m_isRequestRetry > 0 &&
 			HdmiCecSink::_instance->deviceList[header.from.toInt()].m_isRequested == CECDeviceParams::REQUEST_PHISICAL_ADDRESS) {
 	         HdmiCecSink::_instance->deviceList[header.from.toInt()].m_isRequestRetry = 0;
@@ -2407,9 +2408,12 @@ namespace WPEFramework
 			switch ( _instance->deviceList[logicalAddress].m_isRequested ) {
 				case CECDeviceParams::REQUEST_PHISICAL_ADDRESS :
 				{
+
+					LOGINFO("requeststatus :: REQUEST_PHISICAL_ADDRESS");
 					if( _instance->deviceList[logicalAddress].m_isPAUpdated &&
 							_instance->deviceList[logicalAddress].m_isDeviceTypeUpdated )
 					{
+						LOGINFO("requeststatus :: physical address request is success so reset back to REQUEST_NONE");
 						_instance->deviceList[logicalAddress].m_isRequested = CECDeviceParams::REQUEST_NONE;
 					}
 				}
@@ -2523,11 +2527,11 @@ namespace WPEFramework
 			
 			if( _instance->deviceList[logicalAddress].m_isRequested == CECDeviceParams::REQUEST_NONE)
 			{
-				LOGINFO("Request Done");
+				LOGINFO("Request Done for logical addr = %d and for physical ddr = %d",logicalAddress , _instance->deviceList[logicalAddress].m_physicalAddr.toString().c_str());
 				return CECDeviceParams::REQUEST_DONE;
 			}
 
-			//LOGINFO("Request NOT Done");
+			LOGINFO("Request NOT Done");
 			return CECDeviceParams::REQUEST_NOT_DONE;
 		}
 		
@@ -2558,13 +2562,14 @@ namespace WPEFramework
 				{
 					_instance->m_pollThreadState = _instance->m_pollNextState;
 					_instance->m_pollNextState = POLL_THREAD_STATE_NONE;
+					LOGINFO("POLL thread state is %d", _instance->m_pollThreadState);
 				}
 				
 				switch (_instance->m_pollThreadState)  {
 
 				case POLL_THREAD_STATE_POLL :
 				{
-					//LOGINFO("POLL_THREAD_STATE_POLL");
+					LOGINFO("POLL_THREAD_STATE_POLL");
 					_instance->allocateLogicalAddress(DeviceType::TV);
 					if ( _instance->m_logicalAddressAllocated != LogicalAddress::UNREGISTERED)
 					{
@@ -2587,19 +2592,22 @@ namespace WPEFramework
 
 						_instance->m_sleepTime = 0;
 						_instance->m_pollThreadState = POLL_THREAD_STATE_PING;
+						LOGINFO("case POLL_THREAD_STATE_POLL case : poll thread state is %d", instance->m_pollThreadState);
 					}
 					else
 					{
 						LOGINFO("Not able allocate Logical Address for TV");	
 						_instance->m_pollThreadState = POLL_THREAD_STATE_EXIT;
+						LOGINFO("case POLL_THREAD_STATE_POLL : else case : poll thread state is %d", instance->m_pollThreadState);
 					}
 				}
 				break;
 				
 				case POLL_THREAD_STATE_PING :
 				{
-					//LOGINFO("POLL_THREAD_STATE_PING");
+					LOGINFO("POLL_THREAD_STATE_PING");
 					_instance->m_pollThreadState = POLL_THREAD_STATE_INFO;
+					LOGINFO("POLL_THREAD_STATE_PING case : poll thread state is %d", instance->m_pollThreadState);
 					connected.clear();
 					disconnected.clear();
 					_instance->pingDevices(connected, disconnected);
@@ -2619,6 +2627,7 @@ namespace WPEFramework
 							_instance->addDevice(connected[i]);
 							/* If new device is connected, then try to aquire the information */
 							_instance->m_pollThreadState = POLL_THREAD_STATE_INFO;
+							LOGINFO("POLL_THREAD_STATE_PING case : for : poll thread state is %d", instance->m_pollThreadState);
 							_instance->m_sleepTime = 0;
 						}
 					}
@@ -2626,6 +2635,7 @@ namespace WPEFramework
 					{
 						/* Check for any update required */
 						_instance->m_pollThreadState = POLL_THREAD_STATE_UPDATE;
+						LOGINFO("POLL_THREAD_STATE_POLL_PING case : else : poll thread state is %d", instance->m_pollThreadState);
 						_instance->m_sleepTime = 0;
 					}
 				}
@@ -2633,7 +2643,7 @@ namespace WPEFramework
 
 				case POLL_THREAD_STATE_INFO :
 				{
-					//LOGINFO("POLL_THREAD_STATE_INFO");
+					LOGINFO("POLL_THREAD_STATE_INFO");
 
 					if ( logicalAddressRequested == LogicalAddress::UNREGISTERED + TEST_ADD )
 					{
@@ -2644,7 +2654,7 @@ namespace WPEFramework
 								_instance->deviceList[i].m_isDevicePresent &&
 								!_instance->deviceList[i].isAllUpdated() )
 							{
-								//LOGINFO("POLL_THREAD_STATE_INFO -> request for %d", i);
+								LOGINFO("POLL_THREAD_STATE_INFO -> request for %d", i);
 								logicalAddressRequested = i;
 								_instance->request(logicalAddressRequested);
 								_instance->m_sleepTime = HDMICECSINK_REQUEST_INTERVAL_TIME_MS;
@@ -2655,7 +2665,8 @@ namespace WPEFramework
 						if ( i ==  LogicalAddress::UNREGISTERED)
 						{
 							/*So there is no update required, try to ping after some seconds*/
-							_instance->m_pollThreadState = POLL_THREAD_STATE_IDLE;		
+							_instance->m_pollThreadState = POLL_THREAD_STATE_IDLE;	
+							LOGINFO("POLL_THREAD_STATE_INFO case : if  : poll thread state is %d", instance->m_pollThreadState);	
 							_instance->m_sleepTime = 0;
 							//LOGINFO("POLL_THREAD_STATE_INFO -> state change to Ping", i);
 						}
@@ -2665,10 +2676,12 @@ namespace WPEFramework
 						/*So there is request sent for logical address, so wait and check the status */
 						if ( _instance->requestStatus(logicalAddressRequested) == CECDeviceParams::REQUEST_DONE )
 						{
+							LOGINFO("Request is done so logical address requested is set back to unregistered");
 							logicalAddressRequested = LogicalAddress::UNREGISTERED;
 						}
 						else
 						{
+							LOGINFO("Request is not done wait for 200 ms");
 							_instance->m_sleepTime = HDMICECSINK_REQUEST_INTERVAL_TIME_MS;							
 						}
 					}
@@ -2698,6 +2711,7 @@ namespace WPEFramework
 					}
 
 					_instance->m_pollThreadState = POLL_THREAD_STATE_IDLE;		
+					LOGINFO("POLL_THREAD_STATE_INFO case :end : poll thread state is %d", instance->m_pollThreadState);
 					_instance->m_sleepTime = 0;
 				}
 				break;
@@ -2707,6 +2721,7 @@ namespace WPEFramework
 					//LOGINFO("POLL_THREAD_STATE_IDLE");
 					_instance->m_sleepTime = HDMICECSINK_PING_INTERVAL_MS;
 					_instance->m_pollThreadState = POLL_THREAD_STATE_PING;
+					LOGINFO("POLL_THREAD_STATE_IDLE case : poll thread state is %d", instance->m_pollThreadState);
 				}
 				break;
 
@@ -2719,6 +2734,7 @@ namespace WPEFramework
 					if ( _instance->m_isHdmiInConnected == true )
 					{
 						_instance->m_pollThreadState = POLL_THREAD_STATE_POLL;
+						LOGINFO("POLL_THREAD_STATE_WAIT case :  poll thread state is %d", instance->m_pollThreadState);
 					}
 				}
 				break;
