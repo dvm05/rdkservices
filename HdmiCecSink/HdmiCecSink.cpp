@@ -2527,7 +2527,7 @@ namespace WPEFramework
 			
 			if( _instance->deviceList[logicalAddress].m_isRequested == CECDeviceParams::REQUEST_NONE)
 			{
-				LOGINFO("Request Done for logical addr = %d and for physical ddr = %d",logicalAddress , _instance->deviceList[logicalAddress].m_physicalAddr.toString().c_str());
+				LOGINFO("Request Done for logical addr = %d and for physical ddr = %d of request type %d",logicalAddress , _instance->deviceList[logicalAddress].m_physicalAddr.toString().c_str(),  _instance->deviceList[logicalAddress].m_isRequested);
 				return CECDeviceParams::REQUEST_DONE;
 			}
 
@@ -2691,7 +2691,7 @@ namespace WPEFramework
 				/* updating the power status and if required we can add other information later*/
 				case POLL_THREAD_STATE_UPDATE :
 				{
-					//LOGINFO("POLL_THREAD_STATE_UPDATE");
+					LOGINFO("POLL_THREAD_STATE_UPDATE");
 
 					for(int i=0;i<LogicalAddress::UNREGISTERED + TEST_ADD;i++)
 					{
@@ -2718,7 +2718,7 @@ namespace WPEFramework
 
 				case POLL_THREAD_STATE_IDLE :
 				{
-					//LOGINFO("POLL_THREAD_STATE_IDLE");
+					LOGINFO("POLL_THREAD_STATE_IDLE");
 					_instance->m_sleepTime = HDMICECSINK_PING_INTERVAL_MS;
 					_instance->m_pollThreadState = POLL_THREAD_STATE_PING;
 					LOGINFO("POLL_THREAD_STATE_IDLE case : poll thread state is %d", instance->m_pollThreadState);
